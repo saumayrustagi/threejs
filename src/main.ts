@@ -27,9 +27,17 @@ const OCAM = (() => {
 	SCENE.add(
 		plane,
 		(() => {
+			let maxdim = Math.max(
+				OCAM.right - OCAM.left,
+				OCAM.top - OCAM.bottom,
+			);
+			if (!(maxdim & 1)) {
+				maxdim = Math.ceil(maxdim);
+			}
+
 			const ghelper = new THREE.GridHelper(
-				OCAM.right - OCAM.left,
-				OCAM.right - OCAM.left,
+				maxdim,
+				maxdim,
 			);
 			ghelper.rotateX(Math.PI / 2);
 			return ghelper;
