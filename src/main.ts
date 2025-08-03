@@ -73,24 +73,35 @@ SCENE.add(
 	})(),
 );
 
-// ANIMATION
 ((cushion) => {
-	const planeHalfWidth = (cushion.geometry.parameters.width) / 2;
-	let dir = 1;
+	const mousePositionNDC = new THREE.Vector2(-1, 1);
+	const rayCaster = new THREE.Raycaster();
+	// const cushionHalfSide = (cushion.geometry.parameters.width) / 2;
 
+	// let cushionLeftEdge = cushion.position.x - cushionHalfSide;
+	// let cushionBottomEdge = cushion.position.y - cushionHalfSide;
+
+	// let dragging = false;
+	// let in_cushion = false;
+
+	// EVENT HANDLERS
+	((mousePositionNDC) => {
+		globalThis.addEventListener("mousemove", (e) => {
+			mousePositionNDC.x = (e.clientX / globalThis.innerWidth) * 2 - 1;
+			mousePositionNDC.y = (e.clientY / globalThis.innerHeight) * -2 + 1;
+		});
+	})(mousePositionNDC);
+
+	// ANIMATION
 	function animate() {
-		const planeRightEdge = cushion.position.x + planeHalfWidth;
-		const planeLeftEdge = cushion.position.x - planeHalfWidth;
+		rayCaster.setFromCamera(mousePositionNDC, OCAM);
+		const instersects = rayCaster.intersectObjects(SCENE.children);
+		instersects.forEach((obj) => {
+			if (obj.object.id === cushion.id) {
+				console.log("IN SQUARE");
+			}
+		});
 
-		if (planeRightEdge >= OCAM.right) {
-			cushion.position.x = OCAM.right - planeHalfWidth;
-			dir *= -1;
-		} else if (planeLeftEdge <= OCAM.left) {
-			cushion.position.x = OCAM.left + planeHalfWidth;
-			dir *= -1;
-		}
-
-		cushion.position.x += dir * 0.1;
 		RENDERER.render(SCENE, OCAM);
 	}
 
