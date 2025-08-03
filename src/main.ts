@@ -1,11 +1,14 @@
 import * as THREE from "three";
+import profpic from "../assets/profile_flower.png";
+// import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 const ASPECT_RATIO = globalThis.innerWidth / globalThis.innerHeight;
 
 const SCENE = new THREE.Scene();
 
 const RENDERER = (() => {
-	const renderer = new THREE.WebGLRenderer();
+	const renderer = new THREE.WebGLRenderer({ antialias: true });
+	renderer.setPixelRatio(globalThis.devicePixelRatio);
 	renderer.setSize(globalThis.innerWidth, globalThis.innerHeight);
 	document.body.appendChild(renderer.domElement);
 	return renderer;
@@ -23,11 +26,26 @@ const OCAM = (() => {
 	return ocam;
 })();
 
+// const PCAM = (() => {
+// 	const pcam = new THREE.PerspectiveCamera(60, ASPECT_RATIO);
+// 	pcam.position.z = 5;
+// 	const controls = new OrbitControls(pcam, RENDERER.domElement);
+// 	controls.update();
+// 	return pcam;
+// })();
+
+const profpicTexture = (() => {
+	const textureLoader = new THREE.TextureLoader();
+	const picTexture = textureLoader.load(profpic);
+	picTexture.colorSpace = THREE.SRGBColorSpace;
+	picTexture.anisotropy = RENDERER.capabilities.getMaxAnisotropy();
+	return picTexture;
+})();
+
 const cushion = new THREE.Mesh(
 	new THREE.PlaneGeometry(),
 	new THREE.MeshBasicMaterial({
-		color: 0xff0000,
-		side: THREE.DoubleSide,
+		map: profpicTexture,
 	}),
 );
 
