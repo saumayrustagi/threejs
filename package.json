@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
+    "dev": "deno check && vite",
+    "build": "deno check && tsc && vite build",
     "preview": "vite preview",
     "deploy": "gh-pages -d dist --branch pages"
   },
