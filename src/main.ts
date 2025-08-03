@@ -1,6 +1,8 @@
 import * as THREE from "three";
-import profpic from "../assets/profile_flower.png";
 // import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+
+import profpic from "../assets/profile_flower.png";
+import { asyncTextureLoad } from "./async.ts";
 
 const ASPECT_RATIO = globalThis.innerWidth / globalThis.innerHeight;
 
@@ -10,6 +12,7 @@ const RENDERER = (() => {
 	const renderer = new THREE.WebGLRenderer({ antialias: true });
 	renderer.setPixelRatio(globalThis.devicePixelRatio);
 	renderer.setSize(globalThis.innerWidth, globalThis.innerHeight);
+	renderer.outputColorSpace = THREE.SRGBColorSpace;
 	document.body.appendChild(renderer.domElement);
 	return renderer;
 })();
@@ -34,9 +37,9 @@ const OCAM = (() => {
 // 	return pcam;
 // })();
 
-const profpicTexture = (() => {
+const profpicTexture = await (async () => {
 	const textureLoader = new THREE.TextureLoader();
-	const picTexture = textureLoader.load(profpic);
+	const picTexture = await asyncTextureLoad(textureLoader, profpic);
 	picTexture.colorSpace = THREE.SRGBColorSpace;
 	picTexture.anisotropy = RENDERER.capabilities.getMaxAnisotropy();
 	return picTexture;
@@ -65,12 +68,13 @@ SCENE.add(
 			maxdim,
 		);
 		ghelper.rotateX(Math.PI / 2);
+		ghelper.position.z = -100;
 		return ghelper;
 	})(),
 );
 
 // ANIMATION
-(() => {
+((cushion) => {
 	const planeHalfWidth = (cushion.geometry.parameters.width) / 2;
 	let dir = 1;
 
@@ -91,4 +95,4 @@ SCENE.add(
 	}
 
 	RENDERER.setAnimationLoop(animate);
-})();
+})(cushion);
