@@ -23,55 +23,54 @@ const OCAM = (() => {
 	return ocam;
 })();
 
-((plane) => {
-	SCENE.add(
-		plane,
-		(() => {
-			let maxdim = Math.max(
-				OCAM.right - OCAM.left,
-				OCAM.top - OCAM.bottom,
-			);
-			if (!(maxdim & 1)) {
-				maxdim = Math.ceil(maxdim);
-			}
+const cushion = new THREE.Mesh(
+	new THREE.PlaneGeometry(),
+	new THREE.MeshBasicMaterial({
+		color: 0xff0000,
+		side: THREE.DoubleSide,
+	}),
+);
 
-			const ghelper = new THREE.GridHelper(
-				maxdim,
-				maxdim,
-			);
-			ghelper.rotateX(Math.PI / 2);
-			return ghelper;
-		})(),
-	);
+SCENE.add(
+	cushion,
+	(() => {
+		let maxdim = Math.max(
+			OCAM.right - OCAM.left,
+			OCAM.top - OCAM.bottom,
+		);
+		if (!(maxdim & 1)) {
+			maxdim = Math.ceil(maxdim);
+		}
 
-	const planeHalfWidth = plane.geometry.parameters.width / 2;
+		const ghelper = new THREE.GridHelper(
+			maxdim,
+			maxdim,
+		);
+		ghelper.rotateX(Math.PI / 2);
+		return ghelper;
+	})(),
+);
+
+// ANIMATION
+(() => {
+	const planeHalfWidth = (cushion.geometry.parameters.width) / 2;
 	let dir = 1;
-	const cameraRightBoundary = OCAM.right;
-	const cameraLeftBoundary = OCAM.left;
 
 	function animate() {
-		const planeRightEdge = plane.position.x + planeHalfWidth;
-		const planeLeftEdge = plane.position.x - planeHalfWidth;
+		const planeRightEdge = cushion.position.x + planeHalfWidth;
+		const planeLeftEdge = cushion.position.x - planeHalfWidth;
 
-		if (planeRightEdge >= cameraRightBoundary) {
-			plane.position.x = cameraRightBoundary - planeHalfWidth;
+		if (planeRightEdge >= OCAM.right) {
+			cushion.position.x = OCAM.right - planeHalfWidth;
 			dir *= -1;
-		} else if (planeLeftEdge <= cameraLeftBoundary) {
-			plane.position.x = cameraLeftBoundary + planeHalfWidth;
+		} else if (planeLeftEdge <= OCAM.left) {
+			cushion.position.x = OCAM.left + planeHalfWidth;
 			dir *= -1;
 		}
 
-		plane.position.x += dir * 0.1; // Continue moving if within boundaries
+		cushion.position.x += dir * 0.1;
 		RENDERER.render(SCENE, OCAM);
 	}
 
 	RENDERER.setAnimationLoop(animate);
-})(
-	new THREE.Mesh(
-		new THREE.PlaneGeometry(),
-		new THREE.MeshBasicMaterial({
-			color: 0xff0000,
-			side: THREE.DoubleSide,
-		}),
-	),
-);
+})();
