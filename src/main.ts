@@ -3,7 +3,7 @@ import * as THREE from "three";
 
 import profpic from "../assets/profile_flower.png";
 import { asyncTextureLoad } from "./async.ts";
-import "./three-custom.ts";
+import { ocamSetFrustumAndUpdate } from "./three-custom.ts";
 
 const SCENE = new THREE.Scene();
 
@@ -21,7 +21,8 @@ const RENDERER = (() => {
 const OC_SIZE = 3;
 const OCAM = (() => {
 	const ocam = new THREE.OrthographicCamera();
-	ocam.setFrustumAndUpdate(
+	ocamSetFrustumAndUpdate(
+		ocam,
 		-OC_SIZE * ASPECT_RATIO,
 		OC_SIZE * ASPECT_RATIO,
 		OC_SIZE,
@@ -42,7 +43,8 @@ const OCAM = (() => {
 globalThis.addEventListener("resize", () => {
 	ASPECT_RATIO = globalThis.innerWidth / globalThis.innerHeight;
 	RENDERER.setSize(globalThis.innerWidth, globalThis.innerHeight);
-	OCAM.setFrustumAndUpdate(
+	ocamSetFrustumAndUpdate(
+		OCAM,
 		-OC_SIZE * ASPECT_RATIO,
 		OC_SIZE * ASPECT_RATIO,
 		OC_SIZE,

@@ -1,14 +1,15 @@
 import * as THREE from "three";
 
-THREE.OrthographicCamera.prototype.setFrustumAndUpdate = function (
+export function ocamSetFrustumAndUpdate(
+	ocam: THREE.OrthographicCamera,
 	left: number,
 	right: number,
 	top: number,
 	bottom: number,
 ) {
-	this.left = left;
-	this.right = right;
-	this.top = top;
-	this.bottom = bottom;
-	this.updateProjectionMatrix();
-};
+	ocam.left = left;
+	ocam.right = right;
+	ocam.top = top;
+	ocam.bottom = bottom;
+	ocam.updateProjectionMatrix();
+}
