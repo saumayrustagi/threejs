@@ -55,12 +55,12 @@ const cushion = new THREE.Mesh(
 SCENE.add(
 	cushion,
 	(() => {
-		let maxdim = Math.max(
+		let maxdim = Math.ceil(Math.max(
 			OCAM.right - OCAM.left,
 			OCAM.top - OCAM.bottom,
-		);
+		));
 		if (!(maxdim & 1)) {
-			maxdim = Math.ceil(maxdim);
+			maxdim += 1;
 		}
 
 		const ghelper = new THREE.GridHelper(
@@ -73,37 +73,70 @@ SCENE.add(
 	})(),
 );
 
-((cushion) => {
-	const mousePositionNDC = new THREE.Vector2(-1, 1);
+(() => {
+	const mousePositionNDC2D = new THREE.Vector2(-1, 1);
+	const objPosNDC2D = new THREE.Vector2();
+	const relativeNDC2D = new THREE.Vector2();
+	const newObjPosNDC2D = new THREE.Vector2();
+
 	const rayCaster = new THREE.Raycaster();
-	// const cushionHalfSide = (cushion.geometry.parameters.width) / 2;
 
-	// let cushionLeftEdge = cushion.position.x - cushionHalfSide;
-	// let cushionBottomEdge = cushion.position.y - cushionHalfSide;
-
-	// let dragging = false;
-	// let in_cushion = false;
+	let dragging = false;
+	let in_cushion = false;
 
 	// EVENT HANDLERS
-	((mousePositionNDC) => {
+	(() => {
 		globalThis.addEventListener("mousemove", (e) => {
-			mousePositionNDC.x = (e.clientX / globalThis.innerWidth) * 2 - 1;
-			mousePositionNDC.y = (e.clientY / globalThis.innerHeight) * -2 + 1;
+			mousePositionNDC2D.set(
+				(e.clientX / globalThis.innerWidth) * 2 - 1,
+				-(e.clientY / globalThis.innerHeight) * 2 + 1,
+			);
 		});
-	})(mousePositionNDC);
 
-	// ANIMATION
-	function animate() {
-		rayCaster.setFromCamera(mousePositionNDC, OCAM);
-		const instersects = rayCaster.intersectObjects(SCENE.children);
-		instersects.forEach((obj) => {
-			if (obj.object.id === cushion.id) {
-				console.log("IN SQUARE");
+		globalThis.addEventListener("mousedown", () => {
+			if (in_cushion) {
+				dragging = true;
+				relativeNDC2D.subVectors(mousePositionNDC2D, objPosNDC2D);
 			}
 		});
+
+		globalThis.addEventListener("mouseup", () => {
+			dragging = false;
+		});
+	})();
+
+	const cushionPositionClone = new THREE.Vector3();
+	const projectedPosition = new THREE.Vector3();
+	// ANIMATION
+	function animate() {
+		cushionPositionClone.copy(cushion.position).project(
+			OCAM,
+		);
+		objPosNDC2D.set(cushionPositionClone.x, cushionPositionClone.y);
+
+		// Set in_cushion
+		rayCaster.setFromCamera(mousePositionNDC2D, OCAM);
+		const instersects = rayCaster.intersectObjects(SCENE.children);
+		for (const obj of instersects) {
+			if (obj.object.id === cushion.id) {
+				in_cushion = true;
+				break;
+			}
+		}
+
+		if (dragging) {
+			newObjPosNDC2D.subVectors(mousePositionNDC2D, relativeNDC2D);
+			projectedPosition.set(
+				newObjPosNDC2D.x,
+				newObjPosNDC2D.y,
+				0,
+			).unproject(OCAM);
+			cushion.position.x = projectedPosition.x;
+			cushion.position.y = projectedPosition.y;
+		}
 
 		RENDERER.render(SCENE, OCAM);
 	}
 
 	RENDERER.setAnimationLoop(animate);
-})(cushion);
+})();
