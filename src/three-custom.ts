@@ -10,5 +10,5 @@ THREE.OrthographicCamera.prototype.setFrustumAndUpdate = function (
 	this.right = right;
 	this.top = top;
 	this.bottom = bottom;
-	this.updateProjectionMatrix;
+	this.updateProjectionMatrix();
 };

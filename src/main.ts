@@ -3,10 +3,11 @@ import * as THREE from "three";
 
 import profpic from "../assets/profile_flower.png";
 import { asyncTextureLoad } from "./async.ts";
-
-const ASPECT_RATIO = globalThis.innerWidth / globalThis.innerHeight;
+import "./three-custom.ts";
 
 const SCENE = new THREE.Scene();
+
+let ASPECT_RATIO = globalThis.innerWidth / globalThis.innerHeight;
 
 const RENDERER = (() => {
 	const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -17,13 +18,14 @@ const RENDERER = (() => {
 	return renderer;
 })();
 
+const OC_SIZE = 3;
 const OCAM = (() => {
-	const oc_size = 3;
-	const ocam = new THREE.OrthographicCamera(
-		-oc_size * ASPECT_RATIO,
-		oc_size * ASPECT_RATIO,
-		oc_size,
-		-oc_size,
+	const ocam = new THREE.OrthographicCamera();
+	ocam.setFrustumAndUpdate(
+		-OC_SIZE * ASPECT_RATIO,
+		OC_SIZE * ASPECT_RATIO,
+		OC_SIZE,
+		-OC_SIZE,
 	);
 	ocam.position.z = 100;
 	return ocam;
@@ -36,6 +38,17 @@ const OCAM = (() => {
 // 	controls.update();
 // 	return pcam;
 // })();
+
+globalThis.addEventListener("resize", () => {
+	ASPECT_RATIO = globalThis.innerWidth / globalThis.innerHeight;
+	RENDERER.setSize(globalThis.innerWidth, globalThis.innerHeight);
+	OCAM.setFrustumAndUpdate(
+		-OC_SIZE * ASPECT_RATIO,
+		OC_SIZE * ASPECT_RATIO,
+		OC_SIZE,
+		-OC_SIZE,
+	);
+});
 
 const profpicTexture = await (async () => {
 	const textureLoader = new THREE.TextureLoader();
