@@ -43,6 +43,7 @@ const OCAM = (() => {
 const profpicTexture = await (async () => {
 	const textureLoader = new THREE.TextureLoader();
 	const picTexture = await asyncTextureLoad(textureLoader, profpic);
+	picTexture.minFilter = THREE.LinearFilter;
 	picTexture.colorSpace = THREE.SRGBColorSpace;
 	picTexture.anisotropy = RENDERER.capabilities.getMaxAnisotropy();
 	return picTexture;
