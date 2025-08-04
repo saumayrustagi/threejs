@@ -3,7 +3,7 @@ import * as THREE from "three";
 
 import profpic from "../assets/profile_flower.png";
 import { asyncTextureLoad } from "./async.ts";
-import { ocamSetFrustumAndUpdate } from "./three-custom.ts";
+import { createGHelper, ocamSetFrustumAndUpdate } from "./three-custom.ts";
 
 const SCENE = new THREE.Scene();
 
@@ -40,18 +40,6 @@ const OCAM = (() => {
 // 	return pcam;
 // })();
 
-globalThis.addEventListener("resize", () => {
-	ASPECT_RATIO = globalThis.innerWidth / globalThis.innerHeight;
-	RENDERER.setSize(globalThis.innerWidth, globalThis.innerHeight);
-	ocamSetFrustumAndUpdate(
-		OCAM,
-		-OC_SIZE * ASPECT_RATIO,
-		OC_SIZE * ASPECT_RATIO,
-		OC_SIZE,
-		-OC_SIZE,
-	);
-});
-
 const profpicTexture = await (async () => {
 	const textureLoader = new THREE.TextureLoader();
 	const picTexture = await asyncTextureLoad(textureLoader, profpic);
@@ -61,31 +49,17 @@ const profpicTexture = await (async () => {
 })();
 
 const cushion = new THREE.Mesh(
-	new THREE.PlaneGeometry(),
+	new THREE.PlaneGeometry(0.99, 0.99),
 	new THREE.MeshBasicMaterial({
 		map: profpicTexture,
 	}),
 );
 
+let ghelper = createGHelper(OCAM);
+
 SCENE.add(
 	cushion,
-	(() => {
-		let maxdim = Math.ceil(Math.max(
-			OCAM.right - OCAM.left,
-			OCAM.top - OCAM.bottom,
-		));
-		if (!(maxdim & 1)) {
-			maxdim += 1;
-		}
-
-		const ghelper = new THREE.GridHelper(
-			maxdim,
-			maxdim,
-		);
-		ghelper.rotateX(Math.PI / 2);
-		ghelper.position.z = -100;
-		return ghelper;
-	})(),
+	ghelper,
 );
 
 (() => {
@@ -132,6 +106,7 @@ SCENE.add(
 		// Set in_cushion
 		rayCaster.setFromCamera(mousePositionNDC2D, OCAM);
 		const instersects = rayCaster.intersectObjects(SCENE.children);
+		in_cushion = false;
 		for (const obj of instersects) {
 			if (obj.object.id === cushion.id) {
 				in_cushion = true;
@@ -155,3 +130,19 @@ SCENE.add(
 
 	RENDERER.setAnimationLoop(animate);
 })();
+
+globalThis.addEventListener("resize", () => {
+	ASPECT_RATIO = globalThis.innerWidth / globalThis.innerHeight;
+	RENDERER.setSize(globalThis.innerWidth, globalThis.innerHeight);
+	ocamSetFrustumAndUpdate(
+		OCAM,
+		-OC_SIZE * ASPECT_RATIO,
+		OC_SIZE * ASPECT_RATIO,
+		OC_SIZE,
+		-OC_SIZE,
+	);
+	SCENE.remove(ghelper);
+	ghelper.dispose();
+	ghelper = createGHelper(OCAM);
+	SCENE.add(ghelper);
+});
