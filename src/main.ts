@@ -32,6 +32,8 @@ const OCAM = (() => {
 	return ocam;
 })();
 
+let contraintHalfWidth = OC_SIZE * (ASPECT_RATIO / 2);
+
 // const PCAM = (() => {
 // 	const pcam = new THREE.PerspectiveCamera(60, ASPECT_RATIO);
 // 	pcam.position.z = 5;
@@ -55,6 +57,13 @@ const cushion = new THREE.Mesh(
 		map: profpicTexture,
 	}),
 );
+const cushionHalfSide = cushion.geometry.parameters.width / 2;
+
+let minX = -contraintHalfWidth + cushionHalfSide;
+let maxX = contraintHalfWidth - cushionHalfSide;
+let minY = -OC_SIZE + cushionHalfSide;
+// We want that "drop" effect
+// const maxY = OC_SIZE - cushionHalfSide;
 
 let ghelper = createGHelper(OCAM);
 
@@ -122,8 +131,13 @@ SCENE.add(
 				newObjPosNDC2D.y,
 				0,
 			).unproject(OCAM);
-			cushion.position.x = projectedPosition.x;
-			cushion.position.y = projectedPosition.y;
+
+			cushion.position.x = Math.min(
+				Math.max(projectedPosition.x, minX),
+				maxX,
+			);
+
+			cushion.position.y = Math.max(projectedPosition.y, minY);
 		}
 
 		RENDERER.render(SCENE, OCAM);
@@ -142,6 +156,10 @@ globalThis.addEventListener("resize", () => {
 		OC_SIZE,
 		-OC_SIZE,
 	);
+	contraintHalfWidth = OC_SIZE * (ASPECT_RATIO / 2);
+	minX = -contraintHalfWidth + cushionHalfSide;
+	maxX = contraintHalfWidth - cushionHalfSide;
+	minY = -OC_SIZE + cushionHalfSide;
 	SCENE.remove(ghelper);
 	ghelper.dispose();
 	ghelper = createGHelper(OCAM);
