@@ -4,25 +4,18 @@ import * as THREE from "three";
 import profpic from "../assets/profile_flower.png";
 import { asyncTextureLoad } from "./async.ts";
 import { createGHelper, ocamSetFrustumAndUpdate } from "./three-custom.ts";
+import { MyScreen } from "./constants.ts";
 
-const SCENE = new THREE.Scene();
+const SCREEN = new MyScreen();
 
-let ASPECT_RATIO = 0;
+const SCENE = SCREEN.SCENE;
 
-const RENDERER = (() => {
-	const renderer = new THREE.WebGLRenderer({ antialias: true });
-	renderer.setPixelRatio(globalThis.devicePixelRatio);
-	renderer.outputColorSpace = THREE.SRGBColorSpace;
-	document.body.appendChild(renderer.domElement);
-	return renderer;
-})();
+let ASPECT_RATIO = SCREEN.ASPECT_RATIO;
 
-const OC_SIZE = 3;
-const OCAM = (() => {
-	const ocam = new THREE.OrthographicCamera();
-	ocam.position.z = 100;
-	return ocam;
-})();
+const RENDERER = SCREEN.RENDERER;
+
+const OC_SIZE = SCREEN.OC_SIZE;
+const OCAM = SCREEN.CAM as THREE.OrthographicCamera;
 
 let contraintHalfWidth = 0;
 
@@ -61,11 +54,11 @@ SCENE.add(
 	ghelper,
 );
 
-handleResize();
-
 let minX = -contraintHalfWidth + cushionHalfSide;
 let maxX = contraintHalfWidth - cushionHalfSide;
 let minY = -OC_SIZE + cushionHalfSide;
+
+handleResize();
 
 (() => {
 	const mousePositionNDC2D = new THREE.Vector2(-1, 1);
