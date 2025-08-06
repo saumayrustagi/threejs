@@ -5,7 +5,7 @@ export class MyScreen {
 	RENDERER: THREE.WebGLRenderer;
 	CAM: THREE.PerspectiveCamera | THREE.OrthographicCamera;
 	OC_SIZE: number;
-	ASPECT_RATIO: number;
+	ASPECT_RATIO: undefined | number;
 
 	constructor() {
 		this.SCENE = (() => {
@@ -31,8 +31,6 @@ export class MyScreen {
 			globalThis.addEventListener("resize", this.onWindowResize);
 			this.onWindowResize();
 		})();
-
-		this.ASPECT_RATIO = 0;
 		return this;
 	}
 
@@ -64,11 +62,3 @@ function ocamSetFrustumAndUpdate(
 	ocam.bottom = bottom;
 	ocam.updateProjectionMatrix();
 }
-
-// const PCAM = (() => {
-// 	const pcam = new THREE.PerspectiveCamera(60, ASPECT_RATIO);
-// 	pcam.position.z = 5;
-// 	const controls = new OrbitControls(pcam, RENDERER.domElement);
-// 	controls.update();
-// 	return pcam;
-// })();
