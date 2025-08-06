@@ -11,6 +11,7 @@
     "deploy": "gh-pages -d dist --branch pages"
   },
   "dependencies": {
+    "@dimforge/rapier3d": "^0.18.0",
     "@types/three": "^0.178.1",
     "cannon-es": "^0.20.0",
     "three": "^0.179.1"
@@ -18,6 +19,8 @@
   "devDependencies": {
     "gh-pages": "^6.3.0",
     "typescript": "^5.9.2",
-    "vite": "^7.0.6"
+    "vite": "^7.0.6",
+    "vite-plugin-top-level-await": "^1.6.0",
+    "vite-plugin-wasm": "^3.5.0"
   }
 }
