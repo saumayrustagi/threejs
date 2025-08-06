@@ -8,7 +8,11 @@ export class MyScreen {
 	ASPECT_RATIO: number;
 
 	constructor() {
-		this.SCENE = new THREE.Scene();
+		this.SCENE = (() => {
+			const scene = new THREE.Scene();
+			scene.background = new THREE.Color(0xbbbbbb);
+			return scene;
+		})();
 		this.RENDERER = (() => {
 			const renderer = new THREE.WebGLRenderer({ antialias: true });
 			renderer.setPixelRatio(globalThis.devicePixelRatio);
@@ -60,3 +64,11 @@ function ocamSetFrustumAndUpdate(
 	ocam.bottom = bottom;
 	ocam.updateProjectionMatrix();
 }
+
+// const PCAM = (() => {
+// 	const pcam = new THREE.PerspectiveCamera(60, ASPECT_RATIO);
+// 	pcam.position.z = 5;
+// 	const controls = new OrbitControls(pcam, RENDERER.domElement);
+// 	controls.update();
+// 	return pcam;
+// })();
