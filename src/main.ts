@@ -7,12 +7,11 @@ import { createGHelper, ocamSetFrustumAndUpdate } from "./three-custom.ts";
 
 const SCENE = new THREE.Scene();
 
-let ASPECT_RATIO = globalThis.innerWidth / globalThis.innerHeight;
+let ASPECT_RATIO = 0;
 
 const RENDERER = (() => {
 	const renderer = new THREE.WebGLRenderer({ antialias: true });
 	renderer.setPixelRatio(globalThis.devicePixelRatio);
-	renderer.setSize(globalThis.innerWidth, globalThis.innerHeight);
 	renderer.outputColorSpace = THREE.SRGBColorSpace;
 	document.body.appendChild(renderer.domElement);
 	return renderer;
@@ -21,18 +20,11 @@ const RENDERER = (() => {
 const OC_SIZE = 3;
 const OCAM = (() => {
 	const ocam = new THREE.OrthographicCamera();
-	ocamSetFrustumAndUpdate(
-		ocam,
-		-OC_SIZE * ASPECT_RATIO,
-		OC_SIZE * ASPECT_RATIO,
-		OC_SIZE,
-		-OC_SIZE,
-	);
 	ocam.position.z = 100;
 	return ocam;
 })();
 
-let contraintHalfWidth = OC_SIZE * (ASPECT_RATIO / 2);
+let contraintHalfWidth = 0;
 
 // const PCAM = (() => {
 // 	const pcam = new THREE.PerspectiveCamera(60, ASPECT_RATIO);
@@ -59,9 +51,6 @@ const cushion = new THREE.Mesh(
 );
 const cushionHalfSide = cushion.geometry.parameters.width / 2;
 
-let minX = -contraintHalfWidth + cushionHalfSide;
-let maxX = contraintHalfWidth - cushionHalfSide;
-let minY = -OC_SIZE + cushionHalfSide;
 // We want that "drop" effect
 // const maxY = OC_SIZE - cushionHalfSide;
 
@@ -71,6 +60,12 @@ SCENE.add(
 	cushion,
 	ghelper,
 );
+
+handleResize();
+
+let minX = -contraintHalfWidth + cushionHalfSide;
+let maxX = contraintHalfWidth - cushionHalfSide;
+let minY = -OC_SIZE + cushionHalfSide;
 
 (() => {
 	const mousePositionNDC2D = new THREE.Vector2(-1, 1);
@@ -146,9 +141,13 @@ SCENE.add(
 	RENDERER.setAnimationLoop(animate);
 })();
 
-globalThis.addEventListener("resize", () => {
+globalThis.addEventListener("resize", handleResize);
+
+function handleResize() {
 	ASPECT_RATIO = globalThis.innerWidth / globalThis.innerHeight;
+
 	RENDERER.setSize(globalThis.innerWidth, globalThis.innerHeight);
+
 	ocamSetFrustumAndUpdate(
 		OCAM,
 		-OC_SIZE * ASPECT_RATIO,
@@ -156,12 +155,14 @@ globalThis.addEventListener("resize", () => {
 		OC_SIZE,
 		-OC_SIZE,
 	);
+
 	contraintHalfWidth = OC_SIZE * (ASPECT_RATIO / 2);
 	minX = -contraintHalfWidth + cushionHalfSide;
 	maxX = contraintHalfWidth - cushionHalfSide;
 	minY = -OC_SIZE + cushionHalfSide;
+
 	SCENE.remove(ghelper);
 	ghelper.dispose();
 	ghelper = createGHelper(OCAM);
 	SCENE.add(ghelper);
-});
+}

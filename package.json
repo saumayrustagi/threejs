@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "deno check && tsc && vite build",
+    "check": "deno check && deno lint",
+    "build": "deno task check && tsc && vite build",
     "preview": "vite preview",
     "deploy": "gh-pages -d dist --branch pages"
   },
