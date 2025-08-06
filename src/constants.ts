@@ -1,13 +1,20 @@
 import * as THREE from "three";
+import * as CANNON from "cannon-es";
 
 export class MyScreen {
+	//THREE
 	SCENE: THREE.Scene;
 	RENDERER: THREE.WebGLRenderer;
 	CAM: THREE.PerspectiveCamera | THREE.OrthographicCamera;
-	OC_SIZE: number;
-	ASPECT_RATIO: undefined | number;
+	OC_SIZE = 3;
+	ASPECT_RATIO = 1;
+
+	//CANNON
+	WORLD: CANNON.World;
+	TIME_STEP = 1 / 60;
 
 	constructor() {
+		//THREE
 		this.SCENE = (() => {
 			const scene = new THREE.Scene();
 			scene.background = new THREE.Color(0xbbbbbb);
@@ -20,12 +27,18 @@ export class MyScreen {
 			document.body.appendChild(renderer.domElement);
 			return renderer;
 		})();
-		this.OC_SIZE = 3;
 		this.CAM = (() => {
 			const ocam = new THREE.OrthographicCamera();
 			ocam.position.z = 100;
 			return ocam;
 		})();
+
+		//CANNON
+		this.WORLD = new CANNON.World({
+			gravity: new CANNON.Vec3(0, -9.82, 0),
+		});
+
+		//RESIZE
 		(() => {
 			this.onWindowResize = this.onWindowResize.bind(this);
 			globalThis.addEventListener("resize", this.onWindowResize);

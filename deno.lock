@@ -2,6 +2,7 @@
   "version": "5",
   "specifiers": {
     "npm:@types/three@~0.178.1": "0.178.1",
+    "npm:cannon-es@0.20": "0.20.0",
     "npm:gh-pages@^6.3.0": "6.3.0",
     "npm:three@~0.179.1": "0.179.1",
     "npm:typescript@^5.9.2": "5.9.2",
@@ -296,6 +297,9 @@
       "dependencies": [
         "fill-range"
       ]
+    },
+    "cannon-es@0.20.0": {
+      "integrity": "sha512-eZhWTZIkFOnMAJOgfXJa9+b3kVlvG+FX4mdkpePev/w/rP5V8NRquGyEozcjPfEoXUlb+p7d9SUcmDSn14prOA=="
     },
     "commander@13.1.0": {
       "integrity": "sha512-/rFeCpNJQbhSZjGVwO9RFV3xPqbnERS8MmIQzCtD/zl6gpJuV/bMLuN92oG3F7d8oDEHHRrujSXNUr8fpjntKw=="
@@ -658,6 +662,7 @@
     "packageJson": {
       "dependencies": [
         "npm:@types/three@~0.178.1",
+        "npm:cannon-es@0.20",
         "npm:gh-pages@^6.3.0",
         "npm:three@~0.179.1",
         "npm:typescript@^5.9.2",
