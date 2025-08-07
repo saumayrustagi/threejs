@@ -23,22 +23,10 @@ const CAM = (() => {
 
 const WORLD = SCREEN.WORLD;
 
-const profPicTexture = await asyncTextureLoad(
-	new THREE.TextureLoader(),
-	profpic,
-	THREE.LinearFilter,
-	THREE.SRGBColorSpace,
-	RENDERER.capabilities.getMaxAnisotropy(),
-);
-
 const cushion = (() => {
 	const cushion = new Cushion();
 	cushion.createParticles(WORLD);
 	cushion.connectParticles(WORLD);
-	const cushionMaterial = cushion.meshObject
-		.material as THREE.MeshBasicMaterial;
-	cushionMaterial.map = profPicTexture;
-	cushionMaterial.wireframe = false;
 	return cushion;
 })();
 
@@ -75,3 +63,18 @@ function animate() {
 }
 
 RENDERER.setAnimationLoop(animate);
+
+await (async () => {
+	const cushionMaterial = cushion.meshObject
+		.material as THREE.MeshBasicMaterial;
+	const profPicTexture = await asyncTextureLoad(
+		new THREE.TextureLoader(),
+		profpic,
+		THREE.LinearFilter,
+		THREE.SRGBColorSpace,
+		RENDERER.capabilities.getMaxAnisotropy(),
+	);
+	cushionMaterial.map = profPicTexture;
+	cushionMaterial.wireframe = false;
+	cushionMaterial.needsUpdate = true;
+})();
