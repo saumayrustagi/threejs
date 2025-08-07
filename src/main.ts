@@ -5,7 +5,8 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 // import profpic from "../assets/profile_flower.png";
 // import { asyncTextureLoad } from "./async.ts";
 import { MyScreen } from "./constants.ts";
-import { planeObject } from "./planeObject.ts";
+// import { planeObject } from "./planeObject.ts";
+import { cannonPlane } from "./cannonPlane.ts";
 
 const SCREEN = new MyScreen();
 
@@ -176,66 +177,27 @@ function updateParticles() {
 	}
 }
 
-const ground = (() => {
-	const ground = new planeObject(
-		30,
-		10,
-		{
-			wireframe: true,
-			transparent: true,
-			opacity: 1,
-		},
-		0,
-		new CANNON.Plane(),
-		true,
-	);
-	ground.cannonBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
-	ground.cannonBody.position.set(0, -cushion.geometry.parameters.width, 0);
-	ground.cannonBody.linearDamping = 1;
-	return ground;
-})();
-
-const backWall = new planeObject(
-	30,
-	1,
-	{ wireframe: true },
-	0,
-	new CANNON.Plane(),
-	true,
+const ground = new cannonPlane(
+	new CANNON.Vec3(0, -cushion.geometry.parameters.width, 0),
+	new CANNON.Quaternion().setFromEuler(-Math.PI / 2, 0, 0),
 );
-backWall.cannonBody.position.set(
-	0,
-	15 - cushion.geometry.parameters.width,
-	-0.01,
+const backWall = new cannonPlane(
+	new CANNON.Vec3(0, 0, -0.01),
 );
-backWall.meshObject.position.copy(backWall.cannonBody.position);
-// SCENE.add(backWall.meshObject);
-WORLD.addBody(backWall.cannonBody);
-
-const frontWall = new planeObject(
-	30,
-	1,
-	{ wireframe: true },
-	0,
-	new CANNON.Plane(),
-	true,
+const frontWall = new cannonPlane(
+	new CANNON.Vec3(0, 0, 0.01),
+	new CANNON.Quaternion().setFromEuler(Math.PI, 0, 0),
 );
-frontWall.cannonBody.position.set(
-	0,
-	15 - cushion.geometry.parameters.width,
-	0.01,
-);
-frontWall.cannonBody.quaternion.setFromEuler(Math.PI, 0, 0);
-frontWall.meshObject.quaternion.copy(frontWall.cannonBody.quaternion);
-frontWall.meshObject.position.copy(frontWall.cannonBody.position);
-// SCENE.add(frontWall.meshObject);
-WORLD.addBody(frontWall.cannonBody);
 
-SCENE.add(ground.meshObject);
-WORLD.addBody(ground.cannonBody);
+for (
+	const body of [backWall.cannonBody, frontWall.cannonBody, ground.cannonBody]
+) {
+	WORLD.addBody(body);
+}
 
-ground.meshObject.position.copy(ground.cannonBody.position);
-ground.meshObject.quaternion.copy(ground.cannonBody.quaternion);
+// ground.meshObject.position.copy(ground.cannonBody.position);
+// ground.meshObject.quaternion.copy(ground.cannonBody.quaternion);
+// SCENE.add(ground.meshObject);
 
 function animate() {
 	updateParticles();
