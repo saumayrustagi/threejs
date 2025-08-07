@@ -56,6 +56,23 @@ SCENE.add(cushion.meshObject);
 	}
 })();
 
+(() => {
+	const mousePosition = new THREE.Vector2();
+	const raycaster = new THREE.Raycaster();
+	raycaster.setFromCamera(new THREE.Vector2(), CAM);
+	globalThis.addEventListener("mousedown", (e) => {
+		mousePosition.set(
+			(e.clientX / globalThis.innerWidth) * 2 - 1,
+			-(e.clientY / globalThis.innerHeight) * 2 + 1,
+		);
+		raycaster.setFromCamera(mousePosition, CAM);
+		const intersects = raycaster.intersectObject(cushion.meshObject);
+		if (intersects.length > 0) {
+			console.log("touched at", mousePosition);
+		}
+	});
+})();
+
 function animate() {
 	cushion.updateParticles();
 	WORLD.step(SCREEN.TIME_STEP);

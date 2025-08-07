@@ -173,5 +173,7 @@ export class Cushion {
 				positionAttribute.needsUpdate = true;
 			}
 		}
+		this.meshObject.geometry.computeBoundingBox();
+		this.meshObject.geometry.computeBoundingSphere();
 	}
 }
