@@ -42,7 +42,7 @@ export class Cushion {
 		return this;
 	}
 
-	createParticles() {
+	createParticles(WORLD: CANNON.World) {
 		const particles = this.particles;
 
 		const Nx = this.segments;
@@ -65,16 +65,16 @@ export class Cushion {
 					),
 				});
 				particles[i].push(particle);
+				WORLD.addBody(particle);
 			}
 		}
 	}
 
-	connectParticles() {
+	connectParticles(WORLD: CANNON.World) {
 		const Nx = this.segments;
 		const Ny = Nx;
 		const dist = this.particleDist;
 		const diagonalDistance = dist * Math.SQRT2;
-		const bendDistance = dist * 2;
 		const particles = this.particles;
 
 		for (let i = 0; i < Nx + 1; i++) {
@@ -105,20 +105,6 @@ export class Cushion {
 						diagonalDistance,
 					);
 				}
-				if (i < Nx - 1) {
-					this.distConstraint(
-						particles[i][j],
-						particles[i + 2][j],
-						bendDistance,
-					);
-				}
-				if (j < Ny - 1) {
-					this.distConstraint(
-						particles[i][j],
-						particles[i][j + 2],
-						bendDistance,
-					);
-				}
 			}
 		}
 		this.distConstraint(
@@ -154,6 +140,10 @@ export class Cushion {
 			particles[Nx][0],
 			this.side,
 		);
+
+		for (const constraint of this.constraints) {
+			WORLD.addConstraint(constraint);
+		}
 	}
 	distConstraint(p1: CANNON.Body, p2: CANNON.Body, dist: number) {
 		this.constraints.push(new CANNON.DistanceConstraint(p1, p2, dist));

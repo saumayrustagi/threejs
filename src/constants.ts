@@ -34,8 +34,14 @@ export class MyScreen {
 		})();
 
 		//CANNON
+		const solver = (() => {
+			const solver = new CANNON.GSSolver();
+			solver.iterations = 60;
+			return solver;
+		})();
 		this.WORLD = new CANNON.World({
 			gravity: new CANNON.Vec3(0, -9.82, 0),
+			solver: solver,
 		});
 
 		//RESIZE
