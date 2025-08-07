@@ -31,46 +31,61 @@ const WORLD = SCREEN.WORLD;
 // 	RENDERER.capabilities.getMaxAnisotropy(),
 // );
 
-const cushion = new planeObject(
-	1,
-	1,
-	{ wireframe: true },
-	1,
-	new CANNON.Box(
-		new CANNON.Vec3(0.5, 0.5, 0.1),
-	),
-	false,
-);
-cushion.cannonBody.position.set(0, 20, 0);
-SCENE.add(cushion.meshObject);
-WORLD.addBody(cushion.cannonBody);
+const planeObjects: planeObject[] = [];
 
-const ground = new planeObject(
-	30,
-	10,
-	{
-		wireframe: true,
-		transparent: true,
-		opacity: 1,
-	},
-	1,
-	new CANNON.Box(
-		new CANNON.Vec3(15, 15, 0.1),
-	),
-	false,
-);
-ground.cannonBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
-ground.cannonBody.position.set(0, -cushion.side, 0);
-ground.cannonBody.angularVelocity.set(0, 0, 10);
-ground.cannonBody.linearDamping = 1;
-SCENE.add(ground.meshObject);
-WORLD.addBody(ground.cannonBody);
+const cushion = (() => {
+	const cushion = new planeObject(
+		1,
+		1,
+		{ wireframe: true },
+		1,
+		new CANNON.Box(
+			new CANNON.Vec3(0.5, 0.5, 1),
+		),
+		false,
+	);
+	cushion.cannonBody.position.set(0, 10, 0);
+	return cushion;
+})();
+planeObjects.push(cushion);
+
+const ground = (() => {
+	const ground = new planeObject(
+		30,
+		10,
+		{
+			wireframe: true,
+			transparent: true,
+			opacity: 1,
+		},
+		0,
+		new CANNON.Box(
+			new CANNON.Vec3(15, 15, 0.01),
+		),
+		true,
+	);
+	ground.cannonBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+	ground.cannonBody.position.set(0, -cushion.side, 0);
+	ground.cannonBody.linearDamping = 1;
+	return ground;
+})();
+planeObjects.push(ground);
+
+for (const object of planeObjects) {
+	SCENE.add(object.meshObject);
+	WORLD.addBody(object.cannonBody);
+}
+
+function copyMeshFromBody(planeObjects: planeObject[]) {
+	for (const object of planeObjects) {
+		object.meshObject.position.copy(object.cannonBody.position);
+		object.meshObject.quaternion.copy(object.cannonBody.quaternion);
+	}
+}
 
 function animate() {
 	WORLD.step(SCREEN.TIME_STEP);
-	cushion.meshObject.position.copy(cushion.cannonBody.position);
-	ground.meshObject.position.copy(ground.cannonBody.position);
-	ground.meshObject.quaternion.copy(ground.cannonBody.quaternion);
+	copyMeshFromBody(planeObjects);
 	RENDERER.render(SCENE, CAM);
 }
 
