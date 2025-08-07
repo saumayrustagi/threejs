@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+// import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 // import profpic from "../assets/profile_flower.png";
 // import { asyncTextureLoad } from "./async.ts";
@@ -11,18 +11,15 @@ const SCREEN = new MyScreen();
 
 const SCENE = SCREEN.SCENE;
 const RENDERER = SCREEN.RENDERER;
-// const CAM = SCREEN.CAM as THREE.OrthographicCamera;
+const CAM = SCREEN.CAM as THREE.OrthographicCamera;
 
-const CAM = (() => {
-	const pcam = new THREE.PerspectiveCamera(60, SCREEN.ASPECT_RATIO);
-	pcam.position.z = 5;
-	pcam.position.y = 0;
-	// pcam.lookAt(0, 1, 1);
-	const controls = new OrbitControls(pcam, RENDERER.domElement);
-	// controls.target = new THREE.Vector3(0, 10, 0);
-	controls.update();
-	return pcam;
-})();
+// const CAM = (() => {
+// 	const pcam = new THREE.PerspectiveCamera(60, SCREEN.ASPECT_RATIO);
+// 	pcam.position.z = 3;
+// 	const controls = new OrbitControls(pcam, RENDERER.domElement);
+// 	controls.update();
+// 	return pcam;
+// })();
 
 const WORLD = SCREEN.WORLD;
 
@@ -34,26 +31,23 @@ const WORLD = SCREEN.WORLD;
 // 	RENDERER.capabilities.getMaxAnisotropy(),
 // );
 
-const planeObjects: planeObject[] = [];
-
 const cushion = (() => {
-	const cushion = new planeObject(
-		1,
-		8,
-		{ wireframe: true },
-		1,
-		new CANNON.Box(
-			new CANNON.Vec3(0.5, 0.5, 0.1),
-		),
-		false,
+	const cushion = new THREE.Mesh(
+		new THREE.PlaneGeometry(1, 1, 15, 15),
+		new THREE.MeshBasicMaterial({
+			wireframe: true,
+			// transparent: true,
+			// opacity: 1,
+		}),
 	);
-	cushion.cannonBody.position.set(0, 5, 0);
 	return cushion;
 })();
 
-const Nx = cushion.segments;
+SCENE.add(cushion);
+
+const Nx = cushion.geometry.parameters.widthSegments;
 const Ny = Nx;
-const dist = cushion.side / Nx;
+const dist = cushion.geometry.parameters.width / Nx;
 
 const mass = 1;
 const shape = new CANNON.Particle();
@@ -69,7 +63,7 @@ for (let i = 0; i < Nx + 1; i++) {
 			shape: shape,
 			position: new CANNON.Vec3(
 				(i - Nx * 0.5) * dist,
-				(j - Ny * 0.5) * dist,
+				((j - Ny * 0.5) * dist) + 2,
 				0,
 			),
 		});
@@ -102,9 +96,7 @@ function updateParticles() {
 
 			const particlePosition = particles[i][Ny - j].position;
 
-			const positionAttribute =
-				(cushion.meshObject.geometry as THREE.PlaneGeometry).attributes
-					.position;
+			const positionAttribute = cushion.geometry.attributes.position;
 
 			positionAttribute.setXYZ(
 				index,
@@ -118,24 +110,6 @@ function updateParticles() {
 	}
 }
 
-// const arr = (cushion.meshObject.geometry as THREE.PlaneGeometry).attributes
-// 	.position.array;
-// for (
-// 	let i = 0;
-// 	i <
-// 		(cushion.meshObject.geometry as THREE.PlaneGeometry).attributes
-// 			.position.count;
-// 	i += 3
-// ) {
-// 	console.log(arr[i], arr[i + 1], arr[i + 2]);
-// }
-
-// for (let i = 0; i < Nx + 1; i++) {
-// 	for (let j = 0; j < Ny + 1; j++) {
-// 		WORLD.addBody(particles[i][j]);
-// 	}
-// }
-
 const ground = (() => {
 	const ground = new planeObject(
 		30,
@@ -146,36 +120,24 @@ const ground = (() => {
 			opacity: 1,
 		},
 		0,
-		new CANNON.Box(
-			new CANNON.Vec3(15, 15, 0.01),
-		),
+		new CANNON.Plane(),
 		true,
 	);
 	ground.cannonBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
-	ground.cannonBody.position.set(0, -cushion.side, 0);
+	ground.cannonBody.position.set(0, -cushion.geometry.parameters.width, 0);
 	ground.cannonBody.linearDamping = 1;
 	return ground;
 })();
 
-planeObjects.push(cushion, ground);
-for (const object of planeObjects) {
-	SCENE.add(object.meshObject);
-	WORLD.addBody(object.cannonBody);
-}
+SCENE.add(ground.meshObject);
+WORLD.addBody(ground.cannonBody);
 
-function copyMeshFromBody(planeObjects: planeObject[]) {
-	for (const object of planeObjects) {
-		object.meshObject.position.copy(object.cannonBody.position);
-		object.meshObject.quaternion.copy(object.cannonBody.quaternion);
-	}
-}
-
-copyMeshFromBody(planeObjects);
+ground.meshObject.position.copy(ground.cannonBody.position);
+ground.meshObject.quaternion.copy(ground.cannonBody.quaternion);
 
 function animate() {
-	WORLD.step(SCREEN.TIME_STEP / 4);
-	copyMeshFromBody(planeObjects);
 	updateParticles();
+	WORLD.step(SCREEN.TIME_STEP);
 	RENDERER.render(SCENE, CAM);
 }
 
