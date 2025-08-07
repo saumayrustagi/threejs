@@ -1,13 +1,19 @@
-import * as THREE from "three";
+import { type MinificationTextureFilter, Texture, TextureLoader } from "three";
 
 export function asyncTextureLoad(
-	textureLoader: THREE.TextureLoader,
+	textureLoader: TextureLoader,
 	url: string,
-): Promise<THREE.Texture> {
+	minFilter: MinificationTextureFilter,
+	colorSpace: string,
+	anisotropy: number,
+): Promise<Texture> {
 	return new Promise((resolve, reject) => {
 		textureLoader.load(
 			url,
 			(texture) => {
+				texture.minFilter = minFilter;
+				texture.colorSpace = colorSpace;
+				texture.anisotropy = anisotropy;
 				resolve(texture);
 			},
 			undefined,

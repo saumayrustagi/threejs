@@ -1,167 +1,77 @@
 import * as THREE from "three";
-// import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import * as CANNON from "cannon-es";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 import profpic from "../assets/profile_flower.png";
 import { asyncTextureLoad } from "./async.ts";
-import { createGHelper, ocamSetFrustumAndUpdate } from "./three-custom.ts";
+import { MyScreen } from "./constants.ts";
+import { CannonPlane, Cushion } from "./cannonObjects.ts";
 
-const SCENE = new THREE.Scene();
+const SCREEN = new MyScreen();
 
-let ASPECT_RATIO = globalThis.innerWidth / globalThis.innerHeight;
+const SCENE = SCREEN.SCENE;
+const RENDERER = SCREEN.RENDERER;
+// const CAM = SCREEN.CAM as THREE.OrthographicCamera;
 
-const RENDERER = (() => {
-	const renderer = new THREE.WebGLRenderer({ antialias: true });
-	renderer.setPixelRatio(globalThis.devicePixelRatio);
-	renderer.setSize(globalThis.innerWidth, globalThis.innerHeight);
-	renderer.outputColorSpace = THREE.SRGBColorSpace;
-	document.body.appendChild(renderer.domElement);
-	return renderer;
+const CAM = (() => {
+	const pcam = new THREE.PerspectiveCamera(60, SCREEN.ASPECT_RATIO);
+	pcam.position.z = 3;
+	const controls = new OrbitControls(pcam, RENDERER.domElement);
+	controls.update();
+	return pcam;
 })();
 
-const OC_SIZE = 3;
-const OCAM = (() => {
-	const ocam = new THREE.OrthographicCamera();
-	ocamSetFrustumAndUpdate(
-		ocam,
-		-OC_SIZE * ASPECT_RATIO,
-		OC_SIZE * ASPECT_RATIO,
-		OC_SIZE,
-		-OC_SIZE,
-	);
-	ocam.position.z = 100;
-	return ocam;
-})();
+const WORLD = SCREEN.WORLD;
 
-let contraintHalfWidth = OC_SIZE * (ASPECT_RATIO / 2);
-
-// const PCAM = (() => {
-// 	const pcam = new THREE.PerspectiveCamera(60, ASPECT_RATIO);
-// 	pcam.position.z = 5;
-// 	const controls = new OrbitControls(pcam, RENDERER.domElement);
-// 	controls.update();
-// 	return pcam;
-// })();
-
-const profpicTexture = await (async () => {
-	const textureLoader = new THREE.TextureLoader();
-	const picTexture = await asyncTextureLoad(textureLoader, profpic);
-	picTexture.minFilter = THREE.LinearFilter;
-	picTexture.colorSpace = THREE.SRGBColorSpace;
-	picTexture.anisotropy = RENDERER.capabilities.getMaxAnisotropy();
-	return picTexture;
-})();
-
-const cushion = new THREE.Mesh(
-	new THREE.PlaneGeometry(0.99, 0.99),
-	new THREE.MeshBasicMaterial({
-		map: profpicTexture,
-	}),
+const profPicTexture = await asyncTextureLoad(
+	new THREE.TextureLoader(),
+	profpic,
+	THREE.LinearFilter,
+	THREE.SRGBColorSpace,
+	RENDERER.capabilities.getMaxAnisotropy(),
 );
-const cushionHalfSide = cushion.geometry.parameters.width / 2;
 
-let minX = -contraintHalfWidth + cushionHalfSide;
-let maxX = contraintHalfWidth - cushionHalfSide;
-let minY = -OC_SIZE + cushionHalfSide;
-// We want that "drop" effect
-// const maxY = OC_SIZE - cushionHalfSide;
+const cushion = (() => {
+	const cushion = new Cushion();
+	cushion.createParticles(WORLD);
+	cushion.connectParticles(WORLD);
+	const cushionMaterial = cushion.meshObject
+		.material as THREE.MeshBasicMaterial;
+	cushionMaterial.map = profPicTexture;
+	cushionMaterial.wireframe = false;
+	return cushion;
+})();
 
-let ghelper = createGHelper(OCAM);
-
-SCENE.add(
-	cushion,
-	ghelper,
-);
+SCENE.add(cushion.meshObject);
 
 (() => {
-	const mousePositionNDC2D = new THREE.Vector2(-1, 1);
-	const objPosNDC2D = new THREE.Vector2();
-	const relativeNDC2D = new THREE.Vector2();
-	const newObjPosNDC2D = new THREE.Vector2();
+	const ground = new CannonPlane(
+		new CANNON.Vec3(0, -cushion.side, 0),
+		new CANNON.Quaternion().setFromEuler(-Math.PI / 2, 0, 0),
+	);
+	const backWall = new CannonPlane(
+		new CANNON.Vec3(0, 0, -0.01),
+	);
+	const frontWall = new CannonPlane(
+		new CANNON.Vec3(0, 0, 0.01),
+		new CANNON.Quaternion().setFromEuler(Math.PI, 0, 0),
+	);
 
-	const rayCaster = new THREE.Raycaster();
-
-	let dragging = false;
-	let in_cushion = false;
-
-	// EVENT HANDLERS
-	(() => {
-		globalThis.addEventListener("mousemove", (e) => {
-			mousePositionNDC2D.set(
-				(e.clientX / globalThis.innerWidth) * 2 - 1,
-				-(e.clientY / globalThis.innerHeight) * 2 + 1,
-			);
-		});
-
-		globalThis.addEventListener("mousedown", () => {
-			if (in_cushion) {
-				dragging = true;
-				relativeNDC2D.subVectors(mousePositionNDC2D, objPosNDC2D);
-			}
-		});
-
-		globalThis.addEventListener("mouseup", () => {
-			dragging = false;
-		});
-	})();
-
-	const cushionPositionClone = new THREE.Vector3();
-	const projectedPosition = new THREE.Vector3();
-	// ANIMATION
-	function animate() {
-		cushionPositionClone.copy(cushion.position).project(
-			OCAM,
-		);
-		objPosNDC2D.set(cushionPositionClone.x, cushionPositionClone.y);
-
-		// Set in_cushion
-		rayCaster.setFromCamera(mousePositionNDC2D, OCAM);
-		const instersects = rayCaster.intersectObjects(SCENE.children);
-		in_cushion = false;
-		for (const obj of instersects) {
-			if (obj.object.id === cushion.id) {
-				in_cushion = true;
-				break;
-			}
-		}
-
-		if (dragging) {
-			newObjPosNDC2D.subVectors(mousePositionNDC2D, relativeNDC2D);
-			projectedPosition.set(
-				newObjPosNDC2D.x,
-				newObjPosNDC2D.y,
-				0,
-			).unproject(OCAM);
-
-			cushion.position.x = Math.min(
-				Math.max(projectedPosition.x, minX),
-				maxX,
-			);
-
-			cushion.position.y = Math.max(projectedPosition.y, minY);
-		}
-
-		RENDERER.render(SCENE, OCAM);
+	for (
+		const body of [
+			backWall.cannonBody,
+			frontWall.cannonBody,
+			ground.cannonBody,
+		]
+	) {
+		WORLD.addBody(body);
 	}
-
-	RENDERER.setAnimationLoop(animate);
 })();
 
-globalThis.addEventListener("resize", () => {
-	ASPECT_RATIO = globalThis.innerWidth / globalThis.innerHeight;
-	RENDERER.setSize(globalThis.innerWidth, globalThis.innerHeight);
-	ocamSetFrustumAndUpdate(
-		OCAM,
-		-OC_SIZE * ASPECT_RATIO,
-		OC_SIZE * ASPECT_RATIO,
-		OC_SIZE,
-		-OC_SIZE,
-	);
-	contraintHalfWidth = OC_SIZE * (ASPECT_RATIO / 2);
-	minX = -contraintHalfWidth + cushionHalfSide;
-	maxX = contraintHalfWidth - cushionHalfSide;
-	minY = -OC_SIZE + cushionHalfSide;
-	SCENE.remove(ghelper);
-	ghelper.dispose();
-	ghelper = createGHelper(OCAM);
-	SCENE.add(ghelper);
-});
+function animate() {
+	cushion.updateParticles();
+	WORLD.step(SCREEN.TIME_STEP);
+	RENDERER.render(SCENE, CAM);
+}
+
+RENDERER.setAnimationLoop(animate);
