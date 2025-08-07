@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
-// import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 // import profpic from "../assets/profile_flower.png";
 // import { asyncTextureLoad } from "./async.ts";
@@ -11,17 +11,22 @@ const SCREEN = new MyScreen();
 
 const SCENE = SCREEN.SCENE;
 const RENDERER = SCREEN.RENDERER;
-const CAM = SCREEN.CAM as THREE.OrthographicCamera;
+// const CAM = SCREEN.CAM as THREE.OrthographicCamera;
 
-// const CAM = (() => {
-// 	const pcam = new THREE.PerspectiveCamera(60, SCREEN.ASPECT_RATIO);
-// 	pcam.position.z = 3;
-// 	const controls = new OrbitControls(pcam, RENDERER.domElement);
-// 	controls.update();
-// 	return pcam;
-// })();
+const CAM = (() => {
+	const pcam = new THREE.PerspectiveCamera(60, SCREEN.ASPECT_RATIO);
+	pcam.position.z = 3;
+	const controls = new OrbitControls(pcam, RENDERER.domElement);
+	controls.update();
+	return pcam;
+})();
 
 const WORLD = SCREEN.WORLD;
+WORLD.solver = (() => {
+	const solver = new CANNON.GSSolver();
+	solver.iterations = 60;
+	return solver;
+})();
 
 // const profPicTexture = await asyncTextureLoad(
 // 	new THREE.TextureLoader(),
@@ -48,6 +53,8 @@ SCENE.add(cushion);
 const Nx = cushion.geometry.parameters.widthSegments;
 const Ny = Nx;
 const dist = cushion.geometry.parameters.width / Nx;
+const diagonalDistance = dist * Math.SQRT2;
+const bendDistance = dist * 2;
 
 const mass = 1;
 const shape = new CANNON.Particle();
@@ -72,7 +79,7 @@ for (let i = 0; i < Nx + 1; i++) {
 	}
 }
 
-function add_constraint(p1: CANNON.Body, p2: CANNON.Body) {
+function add_constraint(p1: CANNON.Body, p2: CANNON.Body, dist: number) {
 	WORLD.addConstraint(new CANNON.DistanceConstraint(p1, p2, dist));
 }
 
@@ -80,13 +87,72 @@ function add_constraint(p1: CANNON.Body, p2: CANNON.Body) {
 for (let i = 0; i < Nx + 1; i++) {
 	for (let j = 0; j < Ny + 1; j++) {
 		if (i < Nx) {
-			add_constraint(particles[i][j], particles[i + 1][j]);
+			add_constraint(particles[i][j], particles[i + 1][j], dist);
 		}
 		if (j < Ny) {
-			add_constraint(particles[i][j], particles[i][j + 1]);
+			add_constraint(particles[i][j], particles[i][j + 1], dist);
+		}
+		if (i < Nx && j < Ny) {
+			add_constraint(
+				particles[i][j],
+				particles[i + 1][j + 1],
+				diagonalDistance,
+			);
+			add_constraint(
+				particles[i + 1][j],
+				particles[i][j + 1],
+				diagonalDistance,
+			);
+		}
+		if (i < Nx - 1) {
+			add_constraint(
+				particles[i][j],
+				particles[i + 2][j],
+				bendDistance,
+			);
+		}
+		if (j < Ny - 1) {
+			add_constraint(
+				particles[i][j],
+				particles[i][j + 2],
+				bendDistance,
+			);
 		}
 	}
 }
+add_constraint(
+	particles[0][0],
+	particles[Nx][Ny],
+	cushion.geometry.parameters.width * Math.SQRT2,
+);
+
+add_constraint(
+	particles[0][0],
+	particles[0][Ny],
+	cushion.geometry.parameters.width,
+);
+
+add_constraint(
+	particles[0][0],
+	particles[Nx][0],
+	cushion.geometry.parameters.width,
+);
+
+add_constraint(
+	particles[0][Ny],
+	particles[Nx][Ny],
+	cushion.geometry.parameters.width,
+);
+add_constraint(
+	particles[0][Ny],
+	particles[Nx][0],
+	cushion.geometry.parameters.width * Math.SQRT2,
+);
+add_constraint(
+	particles[Nx][Ny],
+	particles[Nx][0],
+	cushion.geometry.parameters.width,
+);
 
 // UPDATE MESH FROM PARTICLES
 function updateParticles() {
@@ -128,6 +194,42 @@ const ground = (() => {
 	ground.cannonBody.linearDamping = 1;
 	return ground;
 })();
+
+const backWall = new planeObject(
+	30,
+	1,
+	{ wireframe: true },
+	0,
+	new CANNON.Plane(),
+	true,
+);
+backWall.cannonBody.position.set(
+	0,
+	15 - cushion.geometry.parameters.width,
+	-0.01,
+);
+backWall.meshObject.position.copy(backWall.cannonBody.position);
+// SCENE.add(backWall.meshObject);
+WORLD.addBody(backWall.cannonBody);
+
+const frontWall = new planeObject(
+	30,
+	1,
+	{ wireframe: true },
+	0,
+	new CANNON.Plane(),
+	true,
+);
+frontWall.cannonBody.position.set(
+	0,
+	15 - cushion.geometry.parameters.width,
+	0.01,
+);
+frontWall.cannonBody.quaternion.setFromEuler(Math.PI, 0, 0);
+frontWall.meshObject.quaternion.copy(frontWall.cannonBody.quaternion);
+frontWall.meshObject.position.copy(frontWall.cannonBody.position);
+// SCENE.add(frontWall.meshObject);
+WORLD.addBody(frontWall.cannonBody);
 
 SCENE.add(ground.meshObject);
 WORLD.addBody(ground.cannonBody);
