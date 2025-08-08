@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+// import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 import profpic from "../assets/profile_flower.png";
 import { asyncTextureLoad } from "./async.ts";
@@ -37,18 +37,8 @@ SCENE.add(cushion.meshObject);
 		new CANNON.Vec3(0, -cushion.side, 0),
 		new CANNON.Quaternion().setFromEuler(-Math.PI / 2, 0, 0),
 	);
-	const backWall = new CannonPlane(
-		new CANNON.Vec3(0, 0, -0.01),
-	);
-	const frontWall = new CannonPlane(
-		new CANNON.Vec3(0, 0, 0.01),
-		new CANNON.Quaternion().setFromEuler(Math.PI, 0, 0),
-	);
-
 	for (
 		const body of [
-			backWall.cannonBody,
-			frontWall.cannonBody,
 			ground.cannonBody,
 		]
 	) {
@@ -158,6 +148,17 @@ SCENE.add(cushion.meshObject);
 function animate() {
 	cushion.updateParticles();
 	WORLD.step(SCREEN.TIME_STEP);
+	const Nx = cushion.segments;
+	const Ny = Nx;
+
+	for (let i = 0; i < Nx + 1; i++) {
+		for (let j = 0; j < Ny + 1; j++) {
+			const particle = cushion.particles[i][j];
+			particle.position.z = 0; // Or whatever your desired Z-plane is
+		}
+	}
+	cushion.meshObject.geometry.computeBoundingBox();
+	cushion.meshObject.geometry.computeBoundingSphere();
 	RENDERER.render(SCENE, CAM);
 }
 
