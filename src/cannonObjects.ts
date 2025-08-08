@@ -107,38 +107,67 @@ export class Cushion {
 				}
 			}
 		}
+		// diagonals
 		this.distConstraint(
 			particles[0][0],
 			particles[Nx][Ny],
 			this.side * Math.SQRT2,
-		);
-
-		this.distConstraint(
-			particles[0][0],
-			particles[0][Ny],
-			this.side,
-		);
-
-		this.distConstraint(
-			particles[0][0],
-			particles[Nx][0],
-			this.side,
-		);
-
-		this.distConstraint(
-			particles[0][Ny],
-			particles[Nx][Ny],
-			this.side,
 		);
 		this.distConstraint(
 			particles[0][Ny],
 			particles[Nx][0],
 			this.side * Math.SQRT2,
 		);
+
+		const halfPointWidth = Math.floor(Nx / 2);
+		const halfPointHeight = Math.floor(Ny / 2);
+
+		// 00 half
+		this.distConstraint(
+			particles[0][0],
+			particles[0][halfPointHeight],
+			this.side / 2,
+		);
+		this.distConstraint(
+			particles[0][0],
+			particles[halfPointWidth][0],
+			this.side / 2,
+		);
+
+		// 0Ny half
+		this.distConstraint(
+			particles[0][Ny],
+			particles[0][halfPointHeight],
+			this.side / 2,
+		);
+		this.distConstraint(
+			particles[0][Ny],
+			particles[halfPointWidth][Ny],
+			this.side / 2,
+		);
+
+		// Nx0 half
+		this.distConstraint(
+			particles[Nx][0],
+			particles[Nx][halfPointHeight],
+			this.side / 2,
+		);
+		this.distConstraint(
+			particles[Nx][0],
+			particles[halfPointWidth][0],
+			this.side / 2,
+		);
+
+		// NxNy half
 		this.distConstraint(
 			particles[Nx][Ny],
-			particles[Nx][0],
-			this.side,
+			particles[Nx][halfPointHeight],
+			this.side / 2,
+		);
+		this.distConstraint(
+			particles[Nx][Ny],
+			particles[halfPointWidth][Ny],
+			this.side / 2,
 		);
 
 		for (const constraint of this.constraints) {
@@ -173,5 +202,7 @@ export class Cushion {
 				positionAttribute.needsUpdate = true;
 			}
 		}
+		this.meshObject.geometry.computeBoundingBox();
+		this.meshObject.geometry.computeBoundingSphere();
 	}
 }
