@@ -6,7 +6,11 @@ export class CannonPlane {
 
 	constructor(position?: CANNON.Vec3, quaternion?: CANNON.Quaternion) {
 		this.cannonBody = new CANNON.Body(
-			{ shape: new CANNON.Plane(), type: CANNON.Body.STATIC },
+			{
+				shape: new CANNON.Plane(),
+				type: CANNON.Body.STATIC,
+				material: new CANNON.Material({ friction: 0 }),
+			},
 		);
 		if (position) {
 			this.cannonBody.position = position;
@@ -64,6 +68,8 @@ export class Cushion {
 						((j - Ny * 0.5) * dist) + 2,
 						0,
 					),
+					linearDamping: 0.9,
+					material: new CANNON.Material({ friction: 0 }),
 				});
 				particles[i].push(particle);
 				WORLD.addBody(particle);
@@ -86,12 +92,18 @@ export class Cushion {
 			this.constraints.push(new CANNON.DistanceConstraint(p1, p2, d));
 		};
 
-		const addSpring = (p1: CANNON.Body, p2: CANNON.Body, d: number) => {
+		const addSpring = (
+			p1: CANNON.Body,
+			p2: CANNON.Body,
+			d: number,
+			stiffness = 1000,
+			damping = 2,
+		) => {
 			this.springs.push(
 				new CANNON.Spring(p1, p2, {
 					restLength: d,
-					stiffness: 1000,
-					damping: 2,
+					stiffness: stiffness,
+					damping: damping,
 				}),
 			);
 		};

@@ -49,7 +49,7 @@ SCENE.add(cushion.meshObject);
 (() => {
 	const mousePosition = new THREE.Vector2();
 	const raycaster = new THREE.Raycaster();
-	let initialIntersection: undefined | THREE.Intersection = undefined;
+	let intersection: null | THREE.Intersection = null;
 
 	let selectedConstraints: CANNON.PointToPointConstraint[] = [];
 	let selectedMouseBodies: CANNON.Body[] = [];
@@ -63,8 +63,8 @@ SCENE.add(cushion.meshObject);
 		raycaster.setFromCamera(mousePosition, CAM);
 		const intersects = raycaster.intersectObject(cushion.meshObject);
 		if (intersects.length > 0) {
-			initialIntersection = intersects[0];
-			const face = initialIntersection.face as THREE.Face;
+			intersection = intersects[0];
+			const face = intersection.face as THREE.Face;
 			const vertices = [face.a, face.b, face.c];
 			const selectedParticles = [];
 			const Nx = cushion.segments;
@@ -77,9 +77,9 @@ SCENE.add(cushion.meshObject);
 			}
 			const zeroVec = new CANNON.Vec3(0, 0, 0);
 			const intersectPointVec = new CANNON.Vec3(
-				initialIntersection.point.x,
-				initialIntersection.point.y,
-				initialIntersection.point.z,
+				intersection.point.x,
+				intersection.point.y,
+				intersection.point.z,
 			);
 			for (const particle of selectedParticles) {
 				const mouseBody = new CANNON.Body({ mass: 0 });
@@ -103,7 +103,7 @@ SCENE.add(cushion.meshObject);
 		}
 	});
 	globalThis.addEventListener("mousemove", (e) => {
-		if (initialIntersection) {
+		if (intersection) {
 			mousePosition.set(
 				(e.clientX / globalThis.innerWidth) * 2 - 1,
 				-(e.clientY / globalThis.innerHeight) * 2 + 1,
@@ -111,7 +111,7 @@ SCENE.add(cushion.meshObject);
 			raycaster.setFromCamera(mousePosition, CAM);
 			const plane = new THREE.Plane(
 				new THREE.Vector3(0, 0, 1),
-				-initialIntersection.point.z,
+				-intersection.point.z,
 			);
 			const newPosition = new THREE.Vector3();
 			raycaster.ray.intersectPlane(plane, newPosition);
@@ -132,7 +132,7 @@ SCENE.add(cushion.meshObject);
 		}
 	});
 	globalThis.addEventListener("mouseup", () => {
-		initialIntersection = undefined;
+		intersection = null;
 		for (const constraint of selectedConstraints) {
 			WORLD.removeConstraint(constraint);
 		}
