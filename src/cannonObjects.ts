@@ -25,6 +25,7 @@ export class Cushion {
 	particleDist: number;
 	particles: CANNON.Body[][] = [];
 	constraints: CANNON.DistanceConstraint[] = [];
+	springs: CANNON.Spring[] = [];
 
 	constructor() {
 		this.meshObject = new THREE.Mesh(
@@ -74,85 +75,71 @@ export class Cushion {
 		const Nx = this.segments;
 		const Ny = Nx;
 		const dist = this.particleDist;
-		const diagonalDistance = dist * Math.SQRT2;
+		const diagDist = dist * Math.SQRT2;
 		const particles = this.particles;
+
+		const addDistConstraint = (
+			p1: CANNON.Body,
+			p2: CANNON.Body,
+			d: number,
+		) => {
+			this.constraints.push(new CANNON.DistanceConstraint(p1, p2, d));
+		};
+
+		const addSpring = (p1: CANNON.Body, p2: CANNON.Body, d: number) => {
+			this.springs.push(
+				new CANNON.Spring(p1, p2, {
+					restLength: d,
+					stiffness: 1000,
+					damping: 2,
+				}),
+			);
+		};
 
 		for (let i = 0; i < Nx + 1; i++) {
 			for (let j = 0; j < Ny + 1; j++) {
 				if (i < Nx) {
-					this.distConstraint(
+					addDistConstraint(
 						particles[i][j],
 						particles[i + 1][j],
 						dist,
 					);
 				}
 				if (j < Ny) {
-					this.distConstraint(
+					addDistConstraint(
 						particles[i][j],
 						particles[i][j + 1],
 						dist,
 					);
 				}
 				if (i < Nx && j < Ny) {
-					this.distConstraint(
+					addDistConstraint(
 						particles[i][j],
 						particles[i + 1][j + 1],
-						diagonalDistance,
+						diagDist,
 					);
-					this.distConstraint(
+					addDistConstraint(
 						particles[i + 1][j],
 						particles[i][j + 1],
-						diagonalDistance,
+						diagDist,
 					);
 				}
 			}
 		}
 
-		// Long-range springs for restoring square shape
-		const addSpring = (p1: CANNON.Body, p2: CANNON.Body, rest: number) => {
-			const spring = new CANNON.Spring(p1, p2, {
-				restLength: rest,
-				stiffness: 1000, // strong pull-back
-				damping: 2, // prevents oscillation from going wild
-			});
-			// store update function so we can call it each step
-			(WORLD as any)._springs = (WORLD as any)._springs || [];
-			(WORLD as any)._springs.push(spring);
-		};
-
-		// Corners -> opposite corners
+		// Opposite Corners
 		addSpring(particles[0][0], particles[Nx][Ny], this.side * Math.SQRT2);
 		addSpring(particles[0][Ny], particles[Nx][0], this.side * Math.SQRT2);
 
+		// Adjacent Corners
 		addSpring(particles[0][0], particles[Nx][0], this.side * Math.SQRT2);
 		addSpring(particles[0][0], particles[0][Ny], this.side * Math.SQRT2);
 		addSpring(particles[0][Ny], particles[Nx][Ny], this.side * Math.SQRT2);
 		addSpring(particles[Nx][0], particles[Nx][Ny], this.side * Math.SQRT2);
 
-		// Corners -> mid edges
-		// const halfW = Math.floor(Nx / 2);
-		// const halfH = Math.floor(Ny / 2);
-
-		// addSpring(particles[0][0], particles[0][halfH], this.side / 2);
-		// addSpring(particles[0][0], particles[halfW][0], this.side / 2);
-
-		// addSpring(particles[0][Ny], particles[0][halfH], this.side / 2);
-		// addSpring(particles[0][Ny], particles[halfW][Ny], this.side / 2);
-
-		// addSpring(particles[Nx][0], particles[Nx][halfH], this.side / 2);
-		// addSpring(particles[Nx][0], particles[halfW][0], this.side / 2);
-
-		// addSpring(particles[Nx][Ny], particles[Nx][halfH], this.side / 2);
-		// addSpring(particles[Nx][Ny], particles[halfW][Ny], this.side / 2);
-
-		// Add the distance constraints to the world
-		for (const constraint of this.constraints) {
-			WORLD.addConstraint(constraint);
+		for (const c of this.constraints) {
+			WORLD.addConstraint(c);
 		}
-	}
-
-	distConstraint(p1: CANNON.Body, p2: CANNON.Body, dist: number) {
-		this.constraints.push(new CANNON.DistanceConstraint(p1, p2, dist));
 	}
 
 	updateParticles() {

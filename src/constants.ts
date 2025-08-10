@@ -1,6 +1,9 @@
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
 
+// SOLVER
+const ITERATIONS = 60;
+
 export class MyScreen {
 	//THREE
 	SCENE: THREE.Scene;
@@ -36,7 +39,7 @@ export class MyScreen {
 		//CANNON
 		const solver = (() => {
 			const solver = new CANNON.GSSolver();
-			solver.iterations = 60;
+			solver.iterations = ITERATIONS;
 			return solver;
 		})();
 		this.WORLD = new CANNON.World({
