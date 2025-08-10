@@ -146,19 +146,25 @@ SCENE.add(cushion.meshObject);
 })();
 
 function animate() {
-	cushion.updateParticles();
-	WORLD.step(SCREEN.TIME_STEP);
-	const Nx = cushion.segments;
-	const Ny = Nx;
-
-	for (let i = 0; i < Nx + 1; i++) {
-		for (let j = 0; j < Ny + 1; j++) {
-			const particle = cushion.particles[i][j];
-			particle.position.z = 0; // Or whatever your desired Z-plane is
+	if ((WORLD as any)._springs) {
+		for (const spring of (WORLD as any)._springs) {
+			spring.applyForce();
 		}
 	}
-	cushion.meshObject.geometry.computeBoundingBox();
-	cushion.meshObject.geometry.computeBoundingSphere();
+	WORLD.step(SCREEN.TIME_STEP);
+	cushion.updateParticles();
+
+	// const Nx = cushion.segments;
+	// const Ny = Nx;
+
+	// for (let i = 0; i < Nx + 1; i++) {
+	// 	for (let j = 0; j < Ny + 1; j++) {
+	// 		const particle = cushion.particles[i][j];
+	// 		particle.position.z = 0; // Or whatever your desired Z-plane is
+	// 	}
+	// }
+	// cushion.meshObject.geometry.computeBoundingBox();
+	// cushion.meshObject.geometry.computeBoundingSphere();
 	RENDERER.render(SCENE, CAM);
 }
 
